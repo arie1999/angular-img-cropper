@@ -459,17 +459,17 @@ angular.module('angular-img-cropper', []).directive("imageCropper", ['$document'
 					else if (this.srcImage && (this.srcImage.height < scope.cropHeight || this.srcImage.width < scope.cropWidth)) {
 						ctx.fillStyle = '#000';
                         // ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-						ctx.font="50px Georgia";
+						ctx.font="30px Georgia";
 						ctx.textAlign="center";
-                        ctx.fillText('Image too small', 450, 250);
+                        ctx.fillText('Image is too small', this.canvas.width / 2, this.canvas.height / 2);
 						scope.imageStatus = false;
 					}
                     else {
                         ctx.fillStyle = '#000';
                         // ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-						ctx.font="50px Georgia";
+						ctx.font="30px Georgia";
 						ctx.textAlign="center";
-                        ctx.fillText('Invalid image source', 450, 250);
+                        ctx.fillText('Invalid image source', this.canvas.width / 2, this.canvas.height / 2);
 						scope.imageStatus = false;
                     }
                 };
