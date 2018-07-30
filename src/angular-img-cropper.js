@@ -10,7 +10,9 @@ angular.module('angular-img-cropper', []).directive("imageCropper", ['$document'
             cropAreaBounds: "=",
             minWidth: "=",
             minHeight: "=",
-            enforceFileType: "@"
+            enforceFileType: "@",
+            jpegQuality: '=',
+			imageStatus: '='
         },
         restrict: "A",
         link: function (scope, element, attrs) {
@@ -382,6 +384,8 @@ angular.module('angular-img-cropper', []).directive("imageCropper", ['$document'
                     this.currentlyInteracting = false;
 
                     this.enforceFileType = scope.enforceFileType ? 'image/' + scope.enforceFileType : undefined;
+                    this.jpegQuality = scope.jpegQuality ? scope.jpegQuality : 0.8;
+					scope.imageStatus = true;
 
                     angular.element(window)
                       .off('mousemove.angular-img-cropper mouseup.angular-img-cropper touchmove.angular-img-cropper touchend.angular-img-cropper')
@@ -405,7 +409,7 @@ angular.module('angular-img-cropper', []).directive("imageCropper", ['$document'
                 };
                 ImageCropper.prototype.draw = function (ctx) {
                     var bounds = this.getBounds();
-                    if (this.srcImage) {
+                    if (this.srcImage && this.srcImage.height >= scope.cropHeight && this.srcImage.width >= scope.cropWidth) {
                         ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
                         var sourceAspect = this.srcImage.height / this.srcImage.width;
                         var canvasAspect = this.canvasHeight / this.canvasWidth;
@@ -431,6 +435,17 @@ angular.module('angular-img-cropper', []).directive("imageCropper", ['$document'
                         ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
                         ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
                         ctx.drawImage(this.buffer, bounds.left, bounds.top, Math.max(bounds.getWidth(), 1), Math.max(bounds.getHeight(), 1), bounds.left, bounds.top, bounds.getWidth(), bounds.getHeight());
+						var imgData=ctx.getImageData(bounds.left, bounds.top, bounds.getWidth(), bounds.getHeight());
+						var data=imgData.data;
+						for(var i=0;i<data.length;i+=4){
+							if(data[i+3]<255){
+							data[i]=255;
+							data[i+1]=255;
+							data[i+2]=255;
+							data[i+3]=255;
+							}
+						}
+						ctx.putImageData(imgData,bounds.left, bounds.top);
                         var marker;
                         for (var i = 0; i < this.markers.length; i++) {
                             marker = this.markers[i];
@@ -440,10 +455,22 @@ angular.module('angular-img-cropper', []).directive("imageCropper", ['$document'
                         ctx.lineWidth = 2;
                         ctx.strokeStyle = 'rgba(255,228,0,1)';
                         ctx.strokeRect(bounds.left, bounds.top, bounds.getWidth(), bounds.getHeight());
-                    }
+                    } 
+					else if (this.srcImage && (this.srcImage.height < scope.cropHeight || this.srcImage.width < scope.cropWidth)) {
+						ctx.fillStyle = '#000';
+                        // ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+						ctx.font="50px Georgia";
+						ctx.textAlign="center";
+                        ctx.fillText('Image too small', 450, 250);
+						scope.imageStatus = false;
+					}
                     else {
-                        ctx.fillStyle = 'rgba(192,192,192,1)';
-                        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                        ctx.fillStyle = '#000';
+                        // ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+						ctx.font="50px Georgia";
+						ctx.textAlign="center";
+                        ctx.fillText('Invalid image source', 450, 250);
+						scope.imageStatus = false;
                     }
                 };
                 ImageCropper.prototype.dragCrop = function (x, y, marker) {
@@ -976,6 +1003,7 @@ angular.module('angular-img-cropper', []).directive("imageCropper", ['$document'
                     if (!this.srcImage) {
                         throw "Source image not set.";
                     }
+					var cvs = this.cropCanvas.getContext('2d');
                     if (fillWidth && fillHeight) {
                         var sourceAspect = this.srcImage.height / this.srcImage.width;
                         var canvasAspect = this.canvas.height / this.canvas.width;
@@ -999,18 +1027,44 @@ angular.module('angular-img-cropper', []).directive("imageCropper", ['$document'
                         this.cropCanvas.height = fillHeight;
                         var offsetH = (this.buffer.height - h) / 2 / this.ratioH;
                         var offsetW = (this.buffer.width - w) / 2 / this.ratioW;
-                        this.drawImageIOSFix(this.cropCanvas.getContext('2d'), this.srcImage, Math.max(Math.round((bounds.left) / this.ratioW - offsetW), 0), Math.max(Math.round(bounds.top / this.ratioH - offsetH), 0), Math.max(Math.round(bounds.getWidth() / this.ratioW), 1), Math.max(Math.round(bounds.getHeight() / this.ratioH), 1), 0, 0, fillWidth, fillHeight);
+                        this.drawImageIOSFix(cvs, this.srcImage, Math.max(Math.round((bounds.left) / this.ratioW - offsetW), 0), Math.max(Math.round(bounds.top / this.ratioH - offsetH), 0), Math.max(Math.round(bounds.getWidth() / this.ratioW), 1), Math.max(Math.round(bounds.getHeight() / this.ratioH), 1), 0, 0, fillWidth, fillHeight);
+						var imgData=cvs.getImageData(0, 0, fillWidth, fillHeight);
+						var data=imgData.data;
+						for(var i=0;i<data.length;i+=4){
+							if(data[i+3]<255){
+							data[i]=255;
+							data[i+1]=255;
+							data[i+2]=255;
+							data[i+3]=255;
+							}
+						}
+
                         this.croppedImage.width = fillWidth;
                         this.croppedImage.height = fillHeight;
                     }
                     else {
                         this.cropCanvas.width = Math.max(bounds.getWidth(), 1);
                         this.cropCanvas.height = Math.max(bounds.getHeight(), 1);
-                        this.cropCanvas.getContext('2d').drawImage(this.buffer, bounds.left, bounds.top, Math.max(bounds.getWidth(), 1), Math.max(bounds.getHeight(), 1), 0, 0, bounds.getWidth(), bounds.getHeight());
+                        cvs.drawImage(this.buffer, bounds.left, bounds.top, Math.max(bounds.getWidth(), 1), Math.max(bounds.getHeight(), 1), 0, 0, bounds.getWidth(), bounds.getHeight());
+						var imgData=cvs.getImageData(0, 0, bounds.getWidth(), bounds.getHeight());
+						var data=imgData.data;
+						for(var i=0;i<data.length;i+=4){
+							if(data[i+3]<255){
+							data[i]=255;
+							data[i+1]=255;
+							data[i+2]=255;
+							data[i+3]=255;
+							}
+						}
                         this.croppedImage.width = this.cropCanvas.width;
                         this.croppedImage.height = this.cropCanvas.height;
                     }
-                    this.croppedImage.src = this.cropCanvas.toDataURL(this.fileType);
+					cvs.putImageData(imgData,0,0);
+                    if (this.fileType == 'image/jpeg' || this.fileType == 'image/jpg') {
+                        this.croppedImage.src = this.cropCanvas.toDataURL(this.fileType, this.jpegQuality)
+                    } else {
+                        this.croppedImage.src = this.cropCanvas.toDataURL(this.fileType)
+                    }
                     return this.croppedImage;
                 };
                 ImageCropper.prototype.getBounds = function () {
