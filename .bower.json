@@ -1,0 +1,39 @@
+{
+  "name": "angular-img-cropper",
+  "homepage": "http://blog.allanbishop.com/angularjs-image-cropper.html",
+  "authors": [
+    "Allan Bishop<allan.bishop@gmail.com>"
+  ],
+  "description": "Client side image cropper directive for AngularJS (rectangular area, aspect ratio, multi-touch)",
+  "main": "dist/angular-img-cropper.min.js",
+  "keywords": [
+    "angular",
+    "cropper",
+    "image",
+    "img",
+    "rectangle",
+    "aspect",
+    "crop"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "node_modules",
+    "src",
+    "test",
+    "package.json",
+    "gruntfile.js",
+    ".git",
+    ".idea",
+    ".txt"
+  ],
+  "_release": "acd7390075",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "acd7390075dfd92dae0e8bb5e46fbc0edc453f8b"
+  },
+  "_source": "git://github.com/arie1999/angular-img-cropper.git",
+  "_target": "*",
+  "_originalSource": "git://github.com/arie1999/angular-img-cropper",
+  "_direct": true
+}
